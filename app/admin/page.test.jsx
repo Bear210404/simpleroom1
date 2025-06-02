@@ -1,8 +1,17 @@
-export default function AdminHome() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold">Welcome Admin</h1>
-      <p className="mt-2">Silakan kelola ruangan dan histori reservasi.</p>
-    </div>
-  );
-}
+import { render, screen } from '@testing-library/react'
+import '@testing-library/jest-dom'
+import AdminHome from './page'
+
+describe('AdminHome', () => {
+test('menampilkan judul dan deskripsi', () => {
+render(<AdminHome />)
+
+expect(
+  screen.getByRole('heading', { name: /Welcome Admin/i })
+).toBeInTheDocument()
+
+expect(
+  screen.getByText(/Silakan kelola ruangan dan histori reservasi/i)
+).toBeInTheDocument()
+})
+})
