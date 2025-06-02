@@ -7,31 +7,12 @@ on:
     branches: [main]
 
 jobs:
-  test-and-deploy:
+  build-test-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run unit tests
-        run: |
-          if npm run | grep -q "test"; then
-            npm run test
-          else
-            echo "Skipping tests: no test script defined"
-          fi
-
-      - name: Build project
-        run: npm run build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -42,7 +23,31 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker Image
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: simple-room-app:temp
+
+      - name: Run container from built image
+        run: |
+          docker run -d --rm --name room-app-test simple-room-app:temp
+          sleep 10 # waktu untuk app startup, sesuaikan jika perlu
+
+      - name: Run tests against Docker container
+        run: |
+          # Misal kamu punya test dalam folder ./tests
+          # Atau bisa juga curl ke localhost container
+          npm ci
+          npm run test
+          
+      - name: Stop container
+        if: always()
+        run: docker stop room-app-test
+
+      - name: Push image to Docker Hub (if tests passed)
+        if: success()
         uses: docker/build-push-action@v5
         with:
           context: .
