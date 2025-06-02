@@ -23,28 +23,28 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker image (no push)
+      - name: Build Docker image (load locally)
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
-          tags: simple-room-app:temp
+          load: true                     # Agar image bisa dipakai lokal
+          tags: simple-room-app:temp     # Nama image lokal
 
       - name: Run container from built image
         run: |
-          docker run -d --rm --name room-app-test simple-room-app:temp
-          sleep 10 # waktu untuk app startup, sesuaikan jika perlu
+          docker run -d -p 3000:3000 --name room-app-test simple-room-app:temp
+          sleep 10 # Tunggu app booting
 
       - name: Run tests against Docker container
         run: |
-          # Misal kamu punya test dalam folder ./tests
-          # Atau bisa juga curl ke localhost container
           npm ci
           npm run test
-          
+
       - name: Stop container
         if: always()
-        run: docker stop room-app-test
+        run: |
+          docker stop room-app-test || true
 
       - name: Push image to Docker Hub (if tests passed)
         if: success()
