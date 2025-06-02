@@ -28,23 +28,20 @@ jobs:
         with:
           context: .
           push: false
-          load: true                     # Agar image bisa dipakai lokal
-          tags: simple-room-app:temp     # Nama image lokal
+          load: true
+          tags: simple-room-app:temp
 
       - name: Run container from built image
         run: |
           docker run -d -p 3000:3000 --name room-app-test simple-room-app:temp
-          sleep 10 # Tunggu app booting
+          sleep 10
 
-      - name: Run tests against Docker container
-        run: |
-          npm ci
-          npm run test
+      - name: Run tests inside Docker container
+        run: docker exec room-app-test npm run test
 
       - name: Stop container
         if: always()
-        run: |
-          docker stop room-app-test || true
+        run: docker stop room-app-test || true
 
       - name: Push image to Docker Hub (if tests passed)
         if: success()
