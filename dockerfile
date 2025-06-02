@@ -1,26 +1,33 @@
-# Tahap build
+# ========================
+# Tahap build (development/test)
+# ========================
 FROM node:18-alpine AS builder
 
-# Buat direktori kerja
+# Direktori kerja
 WORKDIR /app
 
-# Salin semua file (termasuk .env.local)
+# Salin semua file proyek ke container
 COPY . .
 
 # Instal dependensi
 RUN npm install
 
-# Build Next.js (menggunakan .env.local secara otomatis)
+# Jalankan test (akan gagal build jika test gagal)
+RUN npm run test
+
+# Build Next.js app (gunakan .env.local)
 RUN npm run build
 
-# Tahap produksi
+# ========================
+# Tahap produksi (final image)
+# ========================
 FROM node:18-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Hanya salin file yang diperlukan untuk produksi
+# Salin hanya file yang diperlukan untuk production run
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
